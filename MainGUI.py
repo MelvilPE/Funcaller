@@ -48,8 +48,40 @@ class MainWindow(ttk.Frame):
         cbbProcessId = ttk.Combobox(processContainer, style="light")
         cbbProcessId.grid(column=2, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-        processContainer.grid(column=0, row=1, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
+        processContainer.grid(column=0, row=0, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
         # End process properties
+
+        # Start function properties
+        functionContainer = ttk.Frame(widgetsContainer)
+
+        lblCallingConvention = ttk.Label(functionContainer, style="light", text="Calling Convention", justify=CENTER)
+        lblCallingConvention.grid(column=0, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        cbbCallingConvention = ttk.Combobox(functionContainer, style="light")
+        cbbCallingConvention.grid(column=0, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        lblReturnType = ttk.Label(functionContainer, style="light", text="Return Type", justify=CENTER)
+        lblReturnType.grid(column=1, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        cbbReturnType = ttk.Combobox(functionContainer, style="light")
+        cbbReturnType.grid(column=1, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+
+
+        lblFunctionAdress = ttk.Label(functionContainer, style="light", text="Function Adress", justify=CENTER)
+        lblFunctionAdress.grid(column=2, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        cbbFunctionAdress = ttk.Combobox(functionContainer, style="light")
+        cbbFunctionAdress.grid(column=2, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        lblModuleHandle = ttk.Label(functionContainer, style="light", text="Add Module Handle", justify=CENTER)
+        lblModuleHandle.grid(column=3, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        cbbModuleHandle = ttk.Combobox(functionContainer, style="light")
+        cbbModuleHandle.grid(column=3, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+
+        functionContainer.grid(column=0, row=1, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
+        # End function properties
 
 # Brief function to resize and centering the interface
 def WindowGeometry(window, width, height) -> None:
@@ -63,7 +95,7 @@ def Main() -> None:
     app = ttk.Window(
         title="Funcaller", 
         themename="superhero", 
-        resizable=(False, False)
+        # resizable=(False, False)
     )
     WindowGeometry(app, APP_WIDTH, APP_HEIGHT)
     MainWindow(app)
