@@ -2,7 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 
 # Main GUI properties 
-APP_WIDTH  = 500
+APP_WIDTH  = 648
 APP_HEIGHT = 500
 
 # Space properties
@@ -16,6 +16,10 @@ class MainWindow(ttk.Frame):
     
     # Brief function for initializing interface
     def InitializeInterface(self, master) -> None:
+
+        def CallFunction():
+            print("Not ready to execute")
+
         super().__init__(master)
         self.grid(column=0, row=0, sticky="nsew")
 
@@ -66,8 +70,6 @@ class MainWindow(ttk.Frame):
         cbbReturnType = ttk.Combobox(functionContainer, style="light")
         cbbReturnType.grid(column=1, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-
-
         lblFunctionAdress = ttk.Label(functionContainer, style="light", text="Function Adress", justify=CENTER)
         lblFunctionAdress.grid(column=2, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
@@ -83,6 +85,9 @@ class MainWindow(ttk.Frame):
         functionContainer.grid(column=0, row=1, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
         # End function properties
 
+        btnCallFunction = ttk.Button(widgetsContainer, style="info" , text="Execute the function in the target process", command=lambda:CallFunction(), padding=BORDER_SPACE)
+        btnCallFunction.grid(column=0, row=2, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="new")
+
 # Brief function to resize and centering the interface
 def WindowGeometry(window, width, height) -> None:
     window.update_idletasks()
@@ -95,7 +100,7 @@ def Main() -> None:
     app = ttk.Window(
         title="Funcaller", 
         themename="superhero", 
-        # resizable=(False, False)
+        resizable=(False, False)
     )
     WindowGeometry(app, APP_WIDTH, APP_HEIGHT)
     MainWindow(app)
