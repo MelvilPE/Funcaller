@@ -1,9 +1,12 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+from ttkbootstrap.tooltip import ToolTip
+
+import ctypes
 
 # Main GUI properties 
 APP_WIDTH  = 648
-APP_HEIGHT = 500
+APP_HEIGHT = 550
 
 # Space properties
 BORDER_SPACE = 10
@@ -12,13 +15,70 @@ COLUMN_SPACE = 5
 # Brief class to manage the application GUI & ACTIONS
 class MainWindow(ttk.Frame):
     def __init__(self, master) -> None:
+        self.numberOfParameters = 0
+        self.parameterLines = []
+        """
+        Here we have the graphical attributes (hard-coded)
+        Maybe we will move them to a configuration file
+        """
+        self.eProgramArchitectures = ["x86", "x64"]
+        self.eBooleanValues = ["true", "false"]
+        self.eParameterTypes = ["String(const char*)", "Bool", "Byte", "Word", "Dword", "Qword"]
+        self.eReturnTypes = ["Void"] + self.eParameterTypes
         self.InitializeInterface(master)
     
     # Brief function for initializing interface
     def InitializeInterface(self, master) -> None:
 
-        def CallFunction():
+        def CallFunction() -> None:
             print("Not ready to execute")
+
+        # Prevent the ability to switch tabs on the targeted widget
+        def AntiSwitchNotebook(notebook, tabIndex = 0) -> None:
+            notebook.select(tabIndex)
+
+        # Brief functions to use the different tabs to add or remove parameters
+        def AddOrRemoveParameter(event = None) -> None:
+            if event != None:
+                AddOrRemoveParameterLegacy(event)
+            else:
+                AddOrRemoveParameterLegacy(event, True)
+        def AddOrRemoveParameterLegacy(event, addFirstParam = False) -> None:
+            currTabIndex = 0
+            if addFirstParam == True:
+                currTabIndex = 1
+            else:
+                currTabIndex = event.widget.index("current")
+            if currTabIndex != 0:
+                # The action of the + button
+                # We add a new parameter line
+                if currTabIndex == 1:
+                    if self.numberOfParameters >= 10:
+                        ctypes.windll.user32.MessageBoxW(0, "MainGUI::AddOrRemoveParameter Currently impossible to add more than 10 parameters", "Funcaller", 16)
+                    else:
+                        parameterLine = ttk.Frame(paramsContainerInternal, style="light")
+                        if addFirstParam == True:
+                            ToolTip(parameterLine, bootstyle=(DANGER, INVERSE), text="Note that the first parameter is empty by default, which means that the function that you are trying to call has no input parameters")
+
+                        cbbParamType = ttk.Combobox(parameterLine, style="light", width=48, values=self.eParameterTypes)
+                        cbbParamType.grid(column=0, row=0)
+                        
+                        cbbParamValue = ttk.Entry(parameterLine, style="light", width=50)
+                        cbbParamValue.grid(column=1, row=0)
+
+                        parameterLine.grid(column=0, row=self.numberOfParameters, sticky="nsew")
+                        self.parameterLines.append(parameterLine)
+                        self.numberOfParameters += 1
+
+                # The action of the - button
+                # We remove the last parameter line
+                elif currTabIndex == 2 and self.numberOfParameters > 1:
+                        self.parameterLines[self.numberOfParameters-1].grid_forget()
+                        self.parameterLines.pop()
+                        self.numberOfParameters -= 1
+            
+            # We prevent the tab change since they act like buttons
+            AntiSwitchNotebook(paramsContainer)
 
         super().__init__(master)
         self.grid(column=0, row=0, sticky="nsew")
@@ -34,10 +94,10 @@ class MainWindow(ttk.Frame):
         # Start process properties
         processContainer = ttk.Frame(widgetsContainer)
 
-        lblArchitecture = ttk.Label(processContainer, style="light", text="Process Architecture", justify=CENTER)
+        lblArchitecture = ttk.Label(processContainer, style="light", text="Program Architecture", justify=CENTER)
         lblArchitecture.grid(column=0, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-        cbbArchitecture = ttk.Combobox(processContainer, style="light")
+        cbbArchitecture = ttk.Combobox(processContainer, style="light", values=self.eProgramArchitectures)
         cbbArchitecture.grid(column=0, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
         lblProcessName = ttk.Label(processContainer, style="light", text="Process Name", justify=CENTER)
@@ -67,7 +127,7 @@ class MainWindow(ttk.Frame):
         lblReturnType = ttk.Label(functionContainer, style="light", text="Return Type", justify=CENTER)
         lblReturnType.grid(column=1, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-        cbbReturnType = ttk.Combobox(functionContainer, style="light")
+        cbbReturnType = ttk.Combobox(functionContainer, style="light", values=self.eReturnTypes)
         cbbReturnType.grid(column=1, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
         lblFunctionAdress = ttk.Label(functionContainer, style="light", text="Function Adress", justify=CENTER)
@@ -79,14 +139,31 @@ class MainWindow(ttk.Frame):
         lblModuleHandle = ttk.Label(functionContainer, style="light", text="Add Module Handle", justify=CENTER)
         lblModuleHandle.grid(column=3, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-        cbbModuleHandle = ttk.Combobox(functionContainer, style="light")
+        cbbModuleHandle = ttk.Combobox(functionContainer, style="light", values=self.eBooleanValues)
         cbbModuleHandle.grid(column=3, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
         functionContainer.grid(column=0, row=1, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
         # End function properties
 
+        # Start function parameters properties
+        paramsContainer = ttk.Notebook(widgetsContainer, style="info")
+        paramsContainer.bind('<<NotebookTabChanged>>', AddOrRemoveParameter)
+
+        paramsContainerInternal = ttk.Frame(paramsContainer, style="dark")
+        paramsContainer.add(paramsContainerInternal, text="List of Parameters")
+        paramsContainerInternalAddy = ttk.Frame(paramsContainer, style="light")
+        paramsContainer.add(paramsContainerInternalAddy, text="+")
+        paramsContainerInternalRemo = ttk.Frame(paramsContainer, style="light")
+        paramsContainer.add(paramsContainerInternalRemo, text="-")
+
+        paramsContainer.grid(column=0, row=2, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
+        # End function parameters properties
+
         btnCallFunction = ttk.Button(widgetsContainer, style="info" , text="Execute the function in the target process", command=lambda:CallFunction(), padding=BORDER_SPACE)
-        btnCallFunction.grid(column=0, row=2, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="new")
+        btnCallFunction.grid(column=0, row=3, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="new")
+
+        # We automatically add the first parameter, we don't use the event parameter
+        AddOrRemoveParameter()
 
 # Brief function to resize and centering the interface
 def WindowGeometry(window, width, height) -> None:
