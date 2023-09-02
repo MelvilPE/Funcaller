@@ -26,7 +26,7 @@ class MainWindow(ttk.Frame):
         self.eBooleanValues = ["true", "false"]
         self.eParameterTypes = ["String(const char*)", "Bool", "Byte", "Word", "Dword", "Qword"]
         self.eReturnTypes = ["Void"] + self.eParameterTypes
-
+        self.eCallingConventions = ["__cdecl", "__clrcall", "__stdcall", "__fastcall", "__thiscall", "__vectorcall"]
         self.processesList = []
         self.InitializeInterface(master)
 
@@ -151,7 +151,7 @@ class MainWindow(ttk.Frame):
         lblCallingConvention = ttk.Label(functionContainer, style="light", text="Calling Convention", justify=CENTER)
         lblCallingConvention.grid(column=0, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
-        cbbCallingConvention = ttk.Combobox(functionContainer, style="light")
+        cbbCallingConvention = ttk.Combobox(functionContainer, style="light", values=self.eCallingConventions)
         cbbCallingConvention.grid(column=0, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
         lblReturnType = ttk.Label(functionContainer, style="light", text="Return Type", justify=CENTER)
