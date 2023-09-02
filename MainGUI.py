@@ -4,6 +4,7 @@ from ttkbootstrap.tooltip import ToolTip
 
 import Modules.ProcessUtils as ProcessUtils
 import ctypes
+import re
 
 # Main GUI properties 
 APP_WIDTH  = 648
@@ -12,6 +13,9 @@ APP_HEIGHT = 550
 # Space properties
 BORDER_SPACE = 10
 COLUMN_SPACE = 5
+
+# Regex properties
+HEX_FORMAT_REGEX = r'^0x[0-9A-Fa-f]+$'
 
 # Brief class to manage the application GUI & ACTIONS
 class MainWindow(ttk.Frame):
@@ -106,6 +110,27 @@ class MainWindow(ttk.Frame):
             selectedIndex = cbbProcessId.current()
             SetProcInfosFromIndex(selectedIndex)
 
+        def OnAdressWritten(event) -> None:
+            if cbbArchitecture.get() not in self.eProgramArchitectures:
+                cbbFunctionAdress.set("0x")
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnAdressWritten Before entering an address, please select an architecture", "Funcaller", 16)
+                return
+            
+            if not re.match(HEX_FORMAT_REGEX, cbbFunctionAdress.get()) and cbbFunctionAdress.get() != "0x":
+                cbbFunctionAdress.set("0x")
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnAdressWritten Function adress must be in hexadecimal format", "Funcaller", 16)
+                return
+
+            if cbbArchitecture.get() == "x86" and len(cbbFunctionAdress.get()) > len("0xFFFFFFFF"):
+                cbbFunctionAdress.set("0x")
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnAdressWritten For x86 architecture, the address size must be smaller than '0xFFFFFFFF'.", "Funcaller", 16)
+                return
+            
+            if cbbArchitecture.get() == "x64" and len(cbbFunctionAdress.get()) > len("0xFFFFFFFFFFFFFFFF"):
+                cbbFunctionAdress.set("0x")
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnAdressWritten For x64 architecture, the address size must be smaller than '0xFFFFFFFFFFFFFFFF'.", "Funcaller", 16)
+                return
+
         super().__init__(master)
         self.grid(column=0, row=0, sticky="nsew")
 
@@ -165,6 +190,8 @@ class MainWindow(ttk.Frame):
 
         cbbFunctionAdress = ttk.Combobox(functionContainer, style="light")
         cbbFunctionAdress.grid(column=2, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+        cbbFunctionAdress.set("0x") # Function adress must start in hexadecimal format!
+        cbbFunctionAdress.bind('<KeyRelease>', OnAdressWritten)
 
         lblModuleHandle = ttk.Label(functionContainer, style="light", text="Add Module Handle", justify=CENTER)
         lblModuleHandle.grid(column=3, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
