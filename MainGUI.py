@@ -2,6 +2,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.tooltip import ToolTip
 
+import Modules.ProcessUtils as ProcessUtils
 import ctypes
 
 # Main GUI properties 
@@ -25,8 +26,10 @@ class MainWindow(ttk.Frame):
         self.eBooleanValues = ["true", "false"]
         self.eParameterTypes = ["String(const char*)", "Bool", "Byte", "Word", "Dword", "Qword"]
         self.eReturnTypes = ["Void"] + self.eParameterTypes
+
+        self.processesList = []
         self.InitializeInterface(master)
-    
+
     # Brief function for initializing interface
     def InitializeInterface(self, master) -> None:
 
@@ -80,6 +83,29 @@ class MainWindow(ttk.Frame):
             # We prevent the tab change since they act like buttons
             AntiSwitchNotebook(paramsContainer)
 
+        def UpdateProcessesList() -> None:
+            self.processesList = ProcessUtils.ListRunningProcesses()
+            cbbProcessName["values"] = ProcessUtils.ListProcessesNames(self.processesList)
+            cbbProcessId["values"] = ProcessUtils.ListProcessesIds(self.processesList)
+
+        def SetProcInfosFromIndex(selectedProcessIndex) -> None:
+            cbbProcessName.set(self.processesList[selectedProcessIndex]["name"])
+            cbbProcessId.set(self.processesList[selectedProcessIndex]["pid"])
+
+        def OnProcessNameClicked(event) -> None:
+            UpdateProcessesList()
+
+        def OnProcessNameSelected(event) -> None:
+            selectedIndex = cbbProcessName.current()
+            SetProcInfosFromIndex(selectedIndex)
+
+        def OnProcessIdClicked(event) -> None:
+            UpdateProcessesList()
+
+        def OnProcessIdSelected(event) -> None:
+            selectedIndex = cbbProcessId.current()
+            SetProcInfosFromIndex(selectedIndex)
+
         super().__init__(master)
         self.grid(column=0, row=0, sticky="nsew")
 
@@ -105,12 +131,16 @@ class MainWindow(ttk.Frame):
 
         cbbProcessName = ttk.Combobox(processContainer, style="light")
         cbbProcessName.grid(column=1, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+        cbbProcessName.bind('<Button-1>', OnProcessNameClicked)
+        cbbProcessName.bind('<<ComboboxSelected>>', OnProcessNameSelected)
 
         lblProcessId = ttk.Label(processContainer, style="light", text="Process Id", justify=CENTER)
         lblProcessId.grid(column=2, row=0, padx=(BORDER_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
 
         cbbProcessId = ttk.Combobox(processContainer, style="light")
         cbbProcessId.grid(column=2, row=1, padx=(COLUMN_SPACE, COLUMN_SPACE), pady=(BORDER_SPACE, 0), sticky="n")
+        cbbProcessId.bind('<Button-1>', OnProcessIdClicked)
+        cbbProcessId.bind('<<ComboboxSelected>>', OnProcessIdSelected)
 
         processContainer.grid(column=0, row=0, padx=(BORDER_SPACE, BORDER_SPACE), pady=(BORDER_SPACE, 0), sticky="nsew")
         # End process properties
