@@ -236,6 +236,7 @@ def Main() -> None:
         themename="superhero", 
         resizable=(False, False)
     )
+    app.iconbitmap("icon.ico")
     WindowGeometry(app, APP_WIDTH, APP_HEIGHT)
     MainWindow(app)
     app.mainloop()
