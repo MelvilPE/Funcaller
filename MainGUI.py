@@ -4,6 +4,7 @@ from ttkbootstrap.tooltip import ToolTip
 
 import Modules.ProcessUtils as ProcessUtils
 import Modules.StringUtils as StringUtils
+import Modules.JsonUtils as JsonUtils
 import ctypes
 import re
 
@@ -37,8 +38,136 @@ class MainWindow(ttk.Frame):
 
     # Brief function for initializing interface
     def InitializeInterface(self, master) -> None:
+        def CollectParameterLinesFromInterface() -> list:
+            dumpedParameters = []
+            for lineIndex in range(len(self.parameterLines)):
+                childrenWidgets = self.parameterLines[lineIndex].winfo_children()
+                keyTypes = childrenWidgets[0].get()
+                keyValue = childrenWidgets[1].get()
+                if keyTypes not in self.eParameterTypes:
+                    continue
+
+                # Here we convert informations to correct type
+                receivedParameter = {}
+                if keyTypes == "String(const char*)":
+                    receivedParameter[keyTypes] = keyValue
+                if keyTypes == "Bool":
+                    if keyValue in self.eBooleanValues or keyValue == 0 or keyValue == 1:
+                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToBoolean(keyValue)
+                if keyTypes == "Byte":
+                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
+                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
+                if keyTypes == "Word":
+                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
+                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
+                if keyTypes == "Dword":
+                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
+                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
+                if keyTypes == "Qword":
+                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
+                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
+                # We can skip if key types condition has not been declared here or value is wrong
+                if len(receivedParameter) == 0:
+                    continue
+
+                dumpedParameters.append(receivedParameter)
+            return dumpedParameters
+
+        def CollectArchiveFromInterface() -> dict:
+            collectedArchive = {}
+            collectedArchive["architecture"] = cbbArchitecture.get()
+            collectedArchive["processName"] = cbbProcessName.get()
+            collectedArchive["processId"] = StringUtils.ConvertSafelyToInt(cbbProcessId.get())
+            collectedArchive["callingConvention"] = cbbCallingConvention.get()
+            collectedArchive["returnType"] = cbbReturnType.get()
+            collectedArchive["functionAdress"] = StringUtils.ConvertSafelyToInt(cbbFunctionAdress.get())
+            collectedArchive["moduleHandle"] = StringUtils.ConvertSafelyToBoolean(cbbModuleHandle.get())
+            collectedArchive["parameterLines"] = CollectParameterLinesFromInterface()
+            return collectedArchive
+
+        # Brief function to verify informations received from the interface
+        def VerifyCollectedArchive(collectedArchive) -> bool:
+            # Case of the global archive informations
+            if len(collectedArchive) == 0:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive can't be empty!", "Funcaller", 16)
+                return False
+            
+            # Case of the targeted program's architecture
+            if StringUtils.IsNoneOrEmpty(collectedArchive['architecture']):
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing architecture!", "Funcaller", 16)
+                return False
+            
+            if collectedArchive['architecture'] not in self.eProgramArchitectures:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive architecture is wrong!", "Funcaller", 16)
+                return False
+            
+            # Case of the targeted process name
+            UpdateProcessesList()
+            if len(self.processesList) == 0:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected process list is empty!", "Funcaller", 16)
+                return False
+                
+            if StringUtils.IsNoneOrEmpty(collectedArchive['processName']):
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing process name!", "Funcaller", 16)
+                return False
+            
+            foundProcessName = any(processArchive['name'] == collectedArchive['processName'] for processArchive in self.processesList)
+            if not foundProcessName:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Process name wasn't found in refreshed process list!", "Funcaller", 16)
+                return False
+
+            # Case of the targeted process id
+            if collectedArchive['processId'] is None:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing process id!", "Funcaller", 16)
+                return False
+            
+            foundProcessId = any(str(processArchive['pid']) == str(collectedArchive['processId']) for processArchive in self.processesList)
+            if not foundProcessId:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Process id wasn't found in refreshed process list!", "Funcaller", 16)
+                return False
+            
+            # Case of the function calling convention
+            if StringUtils.IsNoneOrEmpty(collectedArchive['callingConvention']):
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing calling convention!", "Funcaller", 16)
+                return False
+            
+            if collectedArchive['callingConvention'] not in self.eCallingConventions:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive calling convention is wrong!", "Funcaller", 16)
+                return False
+            
+            # Case of the function return type
+            if StringUtils.IsNoneOrEmpty(collectedArchive['returnType']):
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing return type!", "Funcaller", 16)
+                return False
+            
+            if collectedArchive['returnType'] not in self.eReturnTypes:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive return type is wrong!", "Funcaller", 16)
+                return False
+            
+            # Case of the function adress in memory
+            if collectedArchive['functionAdress'] is None:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing function adress!", "Funcaller", 16)
+                return False
+            
+            if collectedArchive['functionAdress'] == 0 or collectedArchive['functionAdress'] == -1:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive function adress is wrong!", "Funcaller", 16)
+                return False
+            
+            # In case if we need to add GetModuleHandle(NULL) during injection
+            # In case if user didn't incorporated ASLR into the function's address
+            if collectedArchive['moduleHandle'] is None:
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is missing module handle boolean value!", "Funcaller", 16)
+                return False
+
+            return True
 
         def CallFunction() -> None:
+            resultArchive = CollectArchiveFromInterface()
+            if not VerifyCollectedArchive(resultArchive):
+                ctypes.windll.user32.MessageBoxW(0, "MainGUI::VerifyCollectedArchive Collected archive is has wrong informations!", "Funcaller", 16)
+                return False
+
+            JsonUtils.CreateFileFromDict(resultArchive, "testFile.json")
             print("Not ready to execute")
 
         # Prevent the ability to switch tabs on the targeted widget
