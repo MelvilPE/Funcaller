@@ -3,6 +3,7 @@ from ttkbootstrap.constants import *
 from ttkbootstrap.tooltip import ToolTip
 
 import Modules.ProcessUtils as ProcessUtils
+import Modules.StringUtils as StringUtils
 import ctypes
 import re
 
@@ -57,9 +58,11 @@ class MainWindow(ttk.Frame):
             else:
                 currTabIndex = event.widget.index("current")
             if currTabIndex != 0:
+                TAB_INDEX_ADDBTN = 1
+                TAB_INDEX_REMBTN = 2
                 # The action of the + button
                 # We add a new parameter line
-                if currTabIndex == 1:
+                if currTabIndex == TAB_INDEX_ADDBTN:
                     if self.numberOfParameters >= 10:
                         ctypes.windll.user32.MessageBoxW(0, "MainGUI::AddOrRemoveParameter Currently impossible to add more than 10 parameters", "Funcaller", 16)
                     else:
@@ -67,11 +70,74 @@ class MainWindow(ttk.Frame):
                         if addFirstParam == True:
                             ToolTip(parameterLine, bootstyle=(DANGER, INVERSE), text="Note that the first parameter is empty by default, which means that the function that you are trying to call has no input parameters")
 
+                        def OnParameterTypeSelected(event) -> None:
+                            selectedIndex = cbbParamType.current()
+                            parameterType = self.eParameterTypes[selectedIndex]
+                            cbbParamValue["values"] = []
+                            if parameterType == "String(const char*)":
+                                cbbParamValue.set("")
+                            elif parameterType == "Bool":
+                                cbbParamValue["values"] = self.eBooleanValues
+                                cbbParamValue.set(self.eBooleanValues[0])
+                            elif parameterType == "Byte":
+                                cbbParamValue.set("0x")
+                            elif parameterType == "Word":
+                                cbbParamValue.set("0x")
+                            elif parameterType == "Dword":
+                                cbbParamValue.set("0x")
+                            elif parameterType == "Qword":
+                                cbbParamValue.set("0x")
+                            return
+                        
+                        def OnParameterValueWritten(event) -> None:
+                            parameterType = cbbParamType.get()
+                            parameterValue = cbbParamValue.get()
+                            if parameterType not in self.eParameterTypes:
+                                cbbParamValue.set("")
+                                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Parameter type is wrong!", "Funcaller", 16)
+                                return
+                            
+                            if parameterType == "String(const char*)" and StringUtils.IsWideString(parameterValue):
+                                cbbParamValue.set("")
+                                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Wide strings aren't supported!", "Funcaller", 16)
+                                return
+                            
+                            if parameterType == "Bool" and parameterValue not in self.eBooleanValues:
+                                cbbParamValue.set(self.eBooleanValues[0])
+                                ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Value is not of type boolean!", "Funcaller", 16)
+                                return
+
+                            if parameterType == "Byte":
+                                if not re.match(HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFF"):
+                                    cbbParamValue.set("0x")
+                                    ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Byte value must be in hexadecimal format and size must be smaller than '0xFF'", "Funcaller", 16)
+                                    return
+                            
+                            if parameterType == "Word":
+                                if not re.match(HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFF"):
+                                    cbbParamValue.set("0x")
+                                    ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Word value must be in hexadecimal format and size must be smaller than '0xFFFF'", "Funcaller", 16)
+                                    return
+                                
+                            if parameterType == "Dword":
+                                if not re.match(HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFFFFFF"):
+                                    cbbParamValue.set("0x")
+                                    ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Dword value must be in hexadecimal format and size must be smaller than '0xFFFFFFFF'", "Funcaller", 16)
+                                    return
+                                
+                            if parameterType == "Qword":
+                                if not re.match(HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFFFFFFFFFFFFFF"):
+                                    cbbParamValue.set("0x")
+                                    ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Qword value must be in hexadecimal format and size must be smaller than '0xFFFFFFFFFFFFFFFF'", "Funcaller", 16)
+                                    return
+
                         cbbParamType = ttk.Combobox(parameterLine, style="light", width=48, values=self.eParameterTypes)
                         cbbParamType.grid(column=0, row=0)
+                        cbbParamType.bind('<<ComboboxSelected>>', OnParameterTypeSelected)
                         
-                        cbbParamValue = ttk.Entry(parameterLine, style="light", width=50)
+                        cbbParamValue = ttk.Combobox(parameterLine, style="light", width=48)
                         cbbParamValue.grid(column=1, row=0)
+                        cbbParamValue.bind('<KeyRelease>', OnParameterValueWritten)
 
                         parameterLine.grid(column=0, row=self.numberOfParameters, sticky="nsew")
                         self.parameterLines.append(parameterLine)
@@ -79,7 +145,7 @@ class MainWindow(ttk.Frame):
 
                 # The action of the - button
                 # We remove the last parameter line
-                elif currTabIndex == 2 and self.numberOfParameters > 1:
+                elif currTabIndex == TAB_INDEX_REMBTN and self.numberOfParameters > 1:
                         self.parameterLines[self.numberOfParameters-1].grid_forget()
                         self.parameterLines.pop()
                         self.numberOfParameters -= 1
