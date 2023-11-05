@@ -1,6 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.abspath("."))
 
+import Main
 import Utilities.JsonUtils as JsonUtils
 
 # Listing of all InterfaceModel content and their specific types
@@ -16,7 +17,8 @@ interfaceModelArchive['parameterLines'] -> type: list[dict]
 """
 
 JSON_MODEL_NAME = "InterfaceModel.json"
-JSON_MODEL_PATH = os.path.dirname(os.path.abspath(__file__)) + "\\" + JSON_MODEL_NAME
+# JSON_MODEL_PATH = os.path.dirname(os.path.abspath(__file__)) + "\\" + JSON_MODEL_NAME
+JSON_MODEL_PATH = Main.SCRIPT_ROOT + "\\" + JSON_MODEL_NAME
 
 def Serialize(interfaceModelArchive, modelPath = None):
     if modelPath != None:

@@ -1,11 +1,16 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+import os
 
 import View.InterfaceView as InterfaceView
 
-# Main GUI properties 
+# Gloal consts variables that are specified here can be accessed from others script
 APP_WIDTH  = 648
 APP_HEIGHT = 550
+
+SCRIPT_NAME = os.path.basename(__file__)
+SCRIPT_ROOT = os.path.dirname(__file__)
+SCRIPT_PATH = __file__
 
 # Brief function to resize and centering the interface
 def WindowGeometry(window, width, height) -> None:
