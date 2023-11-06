@@ -12,6 +12,8 @@ SCRIPT_NAME = os.path.basename(__file__)
 SCRIPT_ROOT = os.path.dirname(__file__)
 SCRIPT_PATH = __file__
 
+INTERNAL_PROJECT_NAME = "ApplicationInternal"
+
 # Brief function to resize and centering the interface
 def WindowGeometry(window, width, height) -> None:
     window.update_idletasks()
