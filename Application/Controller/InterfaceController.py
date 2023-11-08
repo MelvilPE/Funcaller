@@ -10,6 +10,8 @@ import View.InterfaceConsts as InterfaceConsts
 import Model.InterfaceModel as InterfaceModel
 
 import Utilities.ProcessUtils as ProcessUtils
+import Utilities.MSBuild as MSBuild
+import Utilities.DLLInjector as DLLInjector
 import Utilities.StringUtils as StringUtils
 
 import ctypes
@@ -45,18 +47,20 @@ def AddOrRemoveParameter(event, instanceMainWindow, addFirstParam = False) -> No
                     selectedIndex = cbbParamType.current()
                     parameterType = InterfaceEnums.eParameterTypes[selectedIndex]
                     cbbParamValue["values"] = []
-                    if parameterType == "String(const char*)":
+                    if parameterType == InterfaceConsts.TYPENAME_STD_STRING:
                         cbbParamValue.set("")
-                    elif parameterType == "Bool":
+                    elif parameterType == InterfaceConsts.TYPENAME_CONST_CHAR_PTR:
+                        cbbParamValue.set("")
+                    elif parameterType == InterfaceConsts.TYPENAME_BOOLEAN:
                         cbbParamValue["values"] = InterfaceEnums.eBooleanValues
                         cbbParamValue.set(InterfaceEnums.eBooleanValues[0])
-                    elif parameterType == "Byte":
+                    elif parameterType == InterfaceConsts.TYPENAME_UINT8:
                         cbbParamValue.set("0x")
-                    elif parameterType == "Word":
+                    elif parameterType == InterfaceConsts.TYPENAME_UINT16:
                         cbbParamValue.set("0x")
-                    elif parameterType == "Dword":
+                    elif parameterType == InterfaceConsts.TYPENAME_UINT32:
                         cbbParamValue.set("0x")
-                    elif parameterType == "Qword":
+                    elif parameterType == InterfaceConsts.TYPENAME_UINT64:
                         cbbParamValue.set("0x")
                     return
                 
@@ -68,38 +72,43 @@ def AddOrRemoveParameter(event, instanceMainWindow, addFirstParam = False) -> No
                         ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Parameter type is wrong!", "Funcaller", 16)
                         return
                     
-                    if parameterType == "String(const char*)" and StringUtils.IsWideString(parameterValue):
+                    if parameterType == InterfaceConsts.TYPENAME_STD_STRING and StringUtils.IsWideString(parameterValue):
                         cbbParamValue.set("")
-                        ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Wide strings aren't supported!", "Funcaller", 16)
-                        return
-                    
-                    if parameterType == "Bool" and parameterValue not in InterfaceEnums.eBooleanValues:
-                        cbbParamValue.set(InterfaceEnums.eBooleanValues[0])
-                        ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Value is not of type boolean!", "Funcaller", 16)
+                        ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten Wide strings for {InterfaceConsts.TYPENAME_STD_STRING} aren't supported!", "Funcaller", 16)
                         return
 
-                    if parameterType == "Byte":
+                    if parameterType == InterfaceConsts.TYPENAME_CONST_CHAR_PTR and StringUtils.IsWideString(parameterValue):
+                        cbbParamValue.set("")
+                        ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten Wide strings for {InterfaceConsts.TYPENAME_CONST_CHAR_PTR} aren't supported!", "Funcaller", 16)
+                        return
+                    
+                    if parameterType == InterfaceConsts.TYPENAME_BOOLEAN and parameterValue not in InterfaceEnums.eBooleanValues:
+                        cbbParamValue.set(InterfaceEnums.eBooleanValues[0])
+                        ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten Value is not of type {InterfaceConsts.TYPENAME_BOOLEAN}!", "Funcaller", 16)
+                        return
+
+                    if parameterType == InterfaceConsts.TYPENAME_UINT8:
                         if not re.match(InterfaceConsts.HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFF"):
                             cbbParamValue.set("0x")
-                            ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Byte value must be in hexadecimal format and size must be smaller than '0xFF'", "Funcaller", 16)
+                            ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten {InterfaceConsts.TYPENAME_UINT8} value must be in hexadecimal format and size must be smaller than '0xFF'", "Funcaller", 16)
                             return
                     
-                    if parameterType == "Word":
+                    if parameterType == InterfaceConsts.TYPENAME_UINT16:
                         if not re.match(InterfaceConsts.HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFF"):
                             cbbParamValue.set("0x")
-                            ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Word value must be in hexadecimal format and size must be smaller than '0xFFFF'", "Funcaller", 16)
+                            ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten {InterfaceConsts.TYPENAME_UINT16} value must be in hexadecimal format and size must be smaller than '0xFFFF'", "Funcaller", 16)
                             return
                         
-                    if parameterType == "Dword":
+                    if parameterType == InterfaceConsts.TYPENAME_UINT32:
                         if not re.match(InterfaceConsts.HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFFFFFF"):
                             cbbParamValue.set("0x")
-                            ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Dword value must be in hexadecimal format and size must be smaller than '0xFFFFFFFF'", "Funcaller", 16)
+                            ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten {InterfaceConsts.TYPENAME_UINT32} value must be in hexadecimal format and size must be smaller than '0xFFFFFFFF'", "Funcaller", 16)
                             return
                         
-                    if parameterType == "Qword":
+                    if parameterType == InterfaceConsts.TYPENAME_UINT64:
                         if not re.match(InterfaceConsts.HEX_FORMAT_REGEX, parameterValue) and parameterValue != "0x" or len(parameterValue) > len("0xFFFFFFFFFFFFFFFF"):
                             cbbParamValue.set("0x")
-                            ctypes.windll.user32.MessageBoxW(0, "MainGUI::OnParameterValueWritten Qword value must be in hexadecimal format and size must be smaller than '0xFFFFFFFFFFFFFFFF'", "Funcaller", 16)
+                            ctypes.windll.user32.MessageBoxW(0, f"MainGUI::OnParameterValueWritten {InterfaceConsts.TYPENAME_UINT64} value must be in hexadecimal format and size must be smaller than '0xFFFFFFFFFFFFFFFF'", "Funcaller", 16)
                             return
 
                 cbbParamType = ttk.Combobox(parameterLine, style="light", width=48, values=InterfaceEnums.eParameterTypes)
@@ -158,74 +167,84 @@ def OnAdressWritten(event, instanceMainWindow) -> None:
         ctypes.windll.user32.MessageBoxW(0, "InterfaceController::OnAdressWritten Function adress must be in hexadecimal format", "Funcaller", 16)
         return
 
-    if instanceMainWindow.cbbArchitecture.get() == "x86" and len(instanceMainWindow.cbbFunctionAdress.get()) > len("0xFFFFFFFF"):
+    if instanceMainWindow.cbbArchitecture.get() == InterfaceConsts.ARCHITECTURE_X86 and len(instanceMainWindow.cbbFunctionAdress.get()) > len("0xFFFFFFFF"):
         instanceMainWindow.cbbFunctionAdress.set("0x")
-        ctypes.windll.user32.MessageBoxW(0, "InterfaceController::OnAdressWritten For x86 architecture, the address size must be smaller than '0xFFFFFFFF'.", "Funcaller", 16)
+        ctypes.windll.user32.MessageBoxW(0, f"InterfaceController::OnAdressWritten For {InterfaceConsts.ARCHITECTURE_X86} architecture, the address size must be smaller than '0xFFFFFFFF'.", "Funcaller", 16)
         return
 
-    if instanceMainWindow.cbbArchitecture.get() == "x64" and len(instanceMainWindow.cbbFunctionAdress.get()) > len("0xFFFFFFFFFFFFFFFF"):
+    if instanceMainWindow.cbbArchitecture.get() == InterfaceConsts.ARCHITECTURE_X64 and len(instanceMainWindow.cbbFunctionAdress.get()) > len("0xFFFFFFFFFFFFFFFF"):
         instanceMainWindow.cbbFunctionAdress.set("0x")
-        ctypes.windll.user32.MessageBoxW(0, "InterfaceController::OnAdressWritten For x64 architecture, the address size must be smaller than '0xFFFFFFFFFFFFFFFF'.", "Funcaller", 16)
+        ctypes.windll.user32.MessageBoxW(0, f"InterfaceController::OnAdressWritten For {InterfaceConsts.ARCHITECTURE_X64} architecture, the address size must be smaller than '0xFFFFFFFFFFFFFFFF'.", "Funcaller", 16)
         return
 
 """ User Action Control with InterfaceModel """
 
-def SaveInterfaceModelArchive(interfaceModelArchive):
+def InitializeCall(interfaceModelArchive):
     if len(interfaceModelArchive) == 0:
-        return "InterfaceController::VerifyModel model can't be empty!"
+        return "InterfaceController::InitializeCall model can't be empty!"
     
     # Architecture
     if StringUtils.IsNoneOrEmpty(interfaceModelArchive['architecture']):
-        return "InterfaceController::VerifyModel model has missing architecture!"
+        return "InterfaceController::InitializeCall model has missing architecture!"
     
     if interfaceModelArchive['architecture'] not in InterfaceEnums.eProgramArchitectures:
-        return "InterfaceController::VerifyModel model architecture is wrong!"
+        return "InterfaceController::InitializeCall model architecture is wrong!"
     
     # Process Name & Id
     processesList = ProcessUtils.ListRunningProcesses()
     if len(processesList) == 0:
-        return "InterfaceController::VerifyModel Collected process list is empty!"
+        return "InterfaceController::InitializeCall Collected process list is empty!"
         
     if StringUtils.IsNoneOrEmpty(interfaceModelArchive['processName']):
-        return "InterfaceController::VerifyModel model has missing process name!"
+        return "InterfaceController::InitializeCall model has missing process name!"
     
     foundProcessName = any(processArchive['name'] == interfaceModelArchive['processName'] for processArchive in processesList)
     if not foundProcessName:
-        return "InterfaceController::VerifyModel Process name wasn't found in refreshed process list!"
+        return "InterfaceController::InitializeCall Process name wasn't found in refreshed process list!"
 
     if interfaceModelArchive['processId'] is None:
-        return "InterfaceController::VerifyModel model has missing process id!"
+        return "InterfaceController::InitializeCall model has missing process id!"
     
     foundProcessId = any(str(processArchive['pid']) == str(interfaceModelArchive['processId']) for processArchive in processesList)
     if not foundProcessId:
-        return "InterfaceController::VerifyModel Process id wasn't found in refreshed process list!"
+        return "InterfaceController::InitializeCall Process id wasn't found in refreshed process list!"
     
     # Calling Convention
     if StringUtils.IsNoneOrEmpty(interfaceModelArchive['callingConvention']):
-        return "InterfaceController::VerifyModel model has missing calling convention!"
+        return "InterfaceController::InitializeCall model has missing calling convention!"
     
     if interfaceModelArchive['callingConvention'] not in InterfaceEnums.eCallingConventions:
-        return "InterfaceController::VerifyModel model calling convention is wrong!"
+        return "InterfaceController::InitializeCall model calling convention is wrong!"
     
     # Return Type
     if StringUtils.IsNoneOrEmpty(interfaceModelArchive['returnType']):
-        return "InterfaceController::VerifyModel model has missing return type!"
+        return "InterfaceController::InitializeCall model has missing return type!"
     
     if interfaceModelArchive['returnType'] not in InterfaceEnums.eReturnTypes:
-        return "InterfaceController::VerifyModel model return type is wrong!"
+        return "InterfaceController::InitializeCall model return type is wrong!"
     
     # Function Adress
     if interfaceModelArchive['functionAdress'] is None:
-        return "InterfaceController::VerifyModel model has missing function adress!"
+        return "InterfaceController::InitializeCall model has missing function adress!"
     
     if interfaceModelArchive['functionAdress'] == 0 or interfaceModelArchive['functionAdress'] == -1:
-        return "InterfaceController::VerifyModel model function adress is wrong!"
+        return "InterfaceController::InitializeCall model function adress is wrong!"
     
     # Module Handle
     if interfaceModelArchive['moduleHandle'] is None:
-        return "InterfaceController::VerifyModel model has missing module handle boolean value!"
+        return "InterfaceController::InitializeCall model has missing module handle boolean value!"
     
+    # Serializing model file
     if not InterfaceModel.Serialize(interfaceModelArchive):
-        return "InterfaceController::VerifyModel saving model file has failed!"
+        return "InterfaceController::InitializeCall saving model file has failed!"
+
+    # Injecting model file if MSBuild is successfull
+    solutionResult = MSBuild.BuildSolution(interfaceModelArchive['architecture'])
+    if solutionResult['dllPath'] == '':
+        return solutionResult['errorMessage']
+    
+    buildedDLL = solutionResult['dllPath']
+    if not DLLInjector.InjectDLL(int(interfaceModelArchive['processId']), buildedDLL):
+        return "InterfaceController::InitializeCall DLL injection has failed after build!"
 
     return ""

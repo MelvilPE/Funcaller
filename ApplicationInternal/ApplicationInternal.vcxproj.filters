@@ -19,6 +19,15 @@
     <Filter Include="Fichiers sources\Sources\Internal">
       <UniqueIdentifier>{977ac325-77fc-43bd-9b6e-6330d800d849}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers sources\Sources\Internal\Controller">
+      <UniqueIdentifier>{6b3caeb6-bd49-4730-bd56-f6a13551b62f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Sources\Internal\Model">
+      <UniqueIdentifier>{7476a9b1-03e7-4693-9169-109c96a8bac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Sources\Internal\Utils">
+      <UniqueIdentifier>{2d44c01e-9e79-4277-a279-3fa6bf97d3a0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -33,6 +42,15 @@
     <ClInclude Include="Sources\Internal\Includes.h">
       <Filter>Fichiers sources\Sources\Internal</Filter>
     </ClInclude>
+    <ClInclude Include="Sources\Internal\Controller\InterfaceController.h">
+      <Filter>Fichiers sources\Sources\Internal\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Internal\Model\InterfaceModel.h">
+      <Filter>Fichiers sources\Sources\Internal\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Internal\Utils\ProcessUtils.h">
+      <Filter>Fichiers sources\Sources\Internal\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -43,6 +61,15 @@
     </ClCompile>
     <ClCompile Include="Sources\Internal\Main.cpp">
       <Filter>Fichiers sources\Sources\Internal</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Internal\Controller\InterfaceController.cpp">
+      <Filter>Fichiers sources\Sources\Internal\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Internal\Model\InterfaceModel.cpp">
+      <Filter>Fichiers sources\Sources\Internal\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Internal\Utils\ProcessUtils.cpp">
+      <Filter>Fichiers sources\Sources\Internal\Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

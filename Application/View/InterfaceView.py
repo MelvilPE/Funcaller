@@ -52,29 +52,7 @@ class MainWindow(ttk.Frame):
                 if keyTypes not in InterfaceEnums.eParameterTypes:
                     continue
 
-                # Here we convert informations to correct type
-                receivedParameter = {}
-                if keyTypes == "String(const char*)":
-                    receivedParameter[keyTypes] = keyValue
-                if keyTypes == "Bool":
-                    if keyValue in InterfaceEnums.eBooleanValues or keyValue == 0 or keyValue == 1:
-                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToBoolean(keyValue)
-                if keyTypes == "Byte":
-                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
-                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
-                if keyTypes == "Word":
-                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
-                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
-                if keyTypes == "Dword":
-                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
-                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
-                if keyTypes == "Qword":
-                    if StringUtils.ConvertSafelyToInt(keyValue) != -1:
-                        receivedParameter[keyTypes] = StringUtils.ConvertSafelyToInt(keyValue)
-                # We can skip if key types condition has not been declared here or value is wrong
-                if len(receivedParameter) == 0:
-                    continue
-
+                receivedParameter = {keyTypes: keyValue}
                 dumpedParameters.append(receivedParameter)
             return dumpedParameters
 
@@ -82,17 +60,17 @@ class MainWindow(ttk.Frame):
             collectedArchive = {}
             collectedArchive["architecture"] = self.cbbArchitecture.get()
             collectedArchive["processName"] = self.cbbProcessName.get()
-            collectedArchive["processId"] = StringUtils.ConvertSafelyToInt(self.cbbProcessId.get())
+            collectedArchive["processId"] = self.cbbProcessId.get()
             collectedArchive["callingConvention"] = self.cbbCallingConvention.get()
             collectedArchive["returnType"] = self.cbbReturnType.get()
-            collectedArchive["functionAdress"] = StringUtils.ConvertSafelyToInt(self.cbbFunctionAdress.get())
-            collectedArchive["moduleHandle"] = StringUtils.ConvertSafelyToBoolean(self.cbbModuleHandle.get())
+            collectedArchive["functionAdress"] = self.cbbFunctionAdress.get()
+            collectedArchive["moduleHandle"] = self.cbbModuleHandle.get()
             collectedArchive["parameterLines"] = CollectParameterLinesFromInterface()
             return collectedArchive
 
         def FinalCalledFunction() -> None:
             resultArchive = CollectArchiveFromInterface()
-            strValidation = InterfaceController.SaveInterfaceModelArchive(resultArchive)
+            strValidation = InterfaceController.InitializeCall(resultArchive)
             if not StringUtils.IsNoneOrEmpty(strValidation):
                 ctypes.windll.user32.MessageBoxW(0, strValidation, "Funcaller", 16)
                 return False
